@@ -101,7 +101,24 @@ ui <- dashboardPage(
       ),
       
       tabItem(tabName = "FAQ",
-              h2("Frequently Asked Questions")
+              h2("Frequently Asked Questions (FAQ)", style = "text-align:center; font-weight:bold;"),
+              p("Punya pertanyaan? Mungkin jawabannya ada di bawah ini.", style = "text-align:center;"),
+              hr(),
+              
+              h3("Apa itu Regresi Logistik Biner?", style="font-weight:bold;"),
+              p("Regresi logistik biner adalah metode statistik yang digunakan untuk memodelkan hubungan antara satu atau lebih variabel prediktor (independen) dengan sebuah variabel respon (dependen) yang bersifat biner atau dikotomus. Artinya, variabel respon hanya memiliki dua kemungkinan nilai, seperti 'Ya/Tidak', 'Sukses/Gagal', atau 'Sakit/Sehat'."),
+              
+              h3("Kapan saya harus menggunakan Regresi Logistik?", style="font-weight:bold;"),
+              p("Gunakan regresi logistik ketika Anda ingin memprediksi hasil dari variabel dependen yang hanya memiliki dua kategori. Contohnya, memprediksi apakah seorang nasabah akan gagal bayar pinjaman (ya/tidak) berdasarkan pendapatan dan riwayat kreditnya."),
+              
+              h3("Apa perbedaan antara link function logit, probit, dan cloglog?", style="font-weight:bold;"),
+              p("Ketiganya digunakan untuk mengubah probabilitas (yang nilainya antara 0 dan 1) menjadi skala kontinu. Perbedaannya terletak pada asumsi distribusi yang mendasarinya:",
+                tags$ul(
+                  tags$li(tags$b("Logit:"), "Paling umum digunakan. Mengasumsikan distribusi logistik. Koefisiennya dapat diinterpretasikan sebagai log-odds."),
+                  tags$li(tags$b("Probit:"), "Mengasumsikan distribusi normal standar kumulatif. Sering digunakan dalam ekonometrika."),
+                  tags$li(tags$b("Cloglog (Complementary log-log):"), "Bersifat asimetris. Cocok digunakan ketika probabilitas salah satu kategori sangat kecil atau sangat besar (kejadian langka).")
+                )
+              )
       )
     )
   )
