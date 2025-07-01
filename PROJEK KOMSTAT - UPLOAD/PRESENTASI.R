@@ -88,7 +88,22 @@ ui <- dashboardPage(
       ),
       
       tabItem(tabName = "step2",
-              h2("Eksplorasi Data")
+              fluidRow(
+                column(6,
+                       tags$h3(icon("chart-bar"), "Data Summary",style= "font-weight: bold;"),
+                       div(class = "box-custom",
+                           verbatimTextOutput("summaryOutputUpload")
+                       )
+                ),
+                
+                column(6,
+                       tags$h3(icon("chart-bar"), "Visualisasi Data",style= "font-weight: bold;"),
+                       div(class = "box-custom",
+                           uiOutput("var_to_plot_ui"),
+                           plotOutput("plotOutputUpload")
+                       )
+                )
+              )
       ),
       
       tabItem(tabName = "step3",
@@ -218,6 +233,27 @@ server <- function(input, output) {
   output$processed_table <- DT::renderDataTable({
     req(df_reactive())
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
+  })
+
+  # Data Summary
+  output$summaryOutputUpload <- renderPrint({
+    req(data())
+    summary(data())
+  })
+  
+  # Visualisasi distribusi variabel yang dipilih
+  output$plotOutputUpload <- renderPlot({
+    df <- df_reactive()
+    var_to_plot <- input$var_to_plot
+    
+    if (!is.null(var_to_plot) && var_to_plot %in% names(df)) {
+      ggplot(df, aes_string(x = var_to_plot)) +
+        geom_bar(fill = "#FFB6C1") +
+        labs(title = paste("Distribusi", var_to_plot),
+             x = var_to_plot, y = "Jumlah") +
+        theme_minimal(base_family = "Georgia") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    }
   })
 }
 
