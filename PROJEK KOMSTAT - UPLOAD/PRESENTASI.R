@@ -38,7 +38,7 @@ ui <- dashboardPage(
           background-repeat: no-repeat;
           background-attachment: fixed;
         }
-        h1, h2, h3, p {
+        h1, h2, h3, h4, p {
           font-family: 'Georgia';
         }
       "))
@@ -61,7 +61,7 @@ ui <- dashboardPage(
                 h3("Apa itu Fungsi Binomial?", style = "font-weight: bold;"),
                 p("Tiga link function yang umum digunakan adalah logit, probit, dan complementary log-log (cloglog). Fungsi logit mengubah menjadi log-odds dengan rumus, dan merupakan yang paling umum digunakan karena interpretasinya yang jelas terhadap odds. Fungsi probit menggunakan invers dari distribusi normal standar kumulatif, cocok untuk data yang diasumsikan mengikuti distribusi normal laten. Sedangkan cloglog menggunakan, lebih sensitif untuk kejadian jarang dan sering digunakan dalam analisis survival. Pemilihan link function tergantung pada asumsi distribusi laten dan konteks aplikasinya."),
                 br(),
-                p("Silahkan Input Datamu!"),
+                h4("Silahkan Input Datamu!"),
                 p("Pastikan datamu dalam format CSV"),
                 fileInput("file1", "Choose a File"),
                 textOutput("file_warning"),
@@ -108,7 +108,7 @@ ui <- dashboardPage(
 )
 
 # Server
-server <- function(input, output) {
+server <- function(input, output, session) {
   # Validasi tipe file dan load data
   data <- reactive({
     req(input$file1)
