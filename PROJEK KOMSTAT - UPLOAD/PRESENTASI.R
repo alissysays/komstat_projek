@@ -4,6 +4,9 @@ library(ggplot2)
 library(DT)
 library(shinydashboard)
 
+# batas maksimal upload file (max 30 MB)
+options(shiny.maxRequestSize = 30*1024^2) 
+
 # code bantuan variabel
 categorical_vars <- c("gender", "EKG_results", "region", "dietary_habits")
 binary_vars <- c("hypertension", "diabetes", "obesity", "family_history", 
@@ -63,7 +66,7 @@ ui <- dashboardPage(
                 br(),
                 p("Silahkan Input Datamu!"),
                 p("Pastikan datamu dalam format CSV"),
-                fileInput("file1", "Choose a File"),
+                fileInput("file1", "Pilih File CSV", accept = c(".csv", ".txt")),
                 textOutput("file_warning"),
                 tableOutput("file1_contents"),
                 tableOutput("tipe_variabel"),
