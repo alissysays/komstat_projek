@@ -96,9 +96,52 @@ ui <- dashboardPage(
               h2("Kecocokan Model")
       ),
       
-      tabItem(tabName = "quiz",
-              h2("Quiz Section")
+      tabItem(tabName = "quiz", 
+              h2("Quiz Time!", style = "text-align:center; font-weight:bold;"),
+              p("Uji pemahamanmu tentang regresi logistik biner.", style = "text-align:center;"),
+              hr(),
+              
+              fluidRow(
+                column(12,
+                       h4("Soal 1", style="font-weight:bold;"),
+                       tags$img(src = "quiz_1.png", width = "100%"),
+                       p("Berikut adalah hasil dari Generalized Linear Model untuk mengetahui apakah suatu kepiting betina memiliki asosiasi dengan kepiting jantan lain berdasarkan lebar cangkangnya. Berdasarkan hasil tersebut, persamaan prediksinya adalah..."),
+                       radioButtons("quiz1", "Pilihan:", 
+                                    choices = c("A. Logit (P(Y=1))= -12,35 +0,49x", 
+                                                "B. (P(Y=1))= -12,35 +0,49x",
+                                                "C. Y= -12,35 +0,49x",
+                                                "D. Y=  0,49-12,35x",
+                                                "E. Logit (P(Y=1))= 0,49-12,35x"), 
+                                    selected = character(0)),
+                       # Tempat untuk menampilkan feedback jawaban 1
+                       uiOutput("quiz1_feedback")),
+              ),
+              hr(),
+              
+              fluidRow(
+                column(12,
+                       h4("Soal 2", style="font-weight:bold;"),
+                       p("Berdasarkan hasil nomor 1, tentukan probabilitas kepiting betina memiliki asosiasi dengan kepiting jantan lain jika lebar cangkangnya sebesar 21 cm!"),
+                       radioButtons("quiz2", "Pilihan:", 
+                                    choices = c("A. 0,812", 
+                                                "B. 0.126",
+                                                "C. 0,129",
+                                                "D. 0,876",
+                                                "E. 0,821"), 
+                                    selected = character(0)),
+                       # Tempat untuk menampilkan feedback jawaban 2
+                       uiOutput("quiz2_feedback")),
+              ),
+              hr(),
+              
+              # --- Tombol untuk Cek Jawaban ---
+              fluidRow(
+                column(12, align="center",
+                       actionButton("check_quiz", "Cek Jawaban!", icon = icon("check"), class = "btn-primary")
+                )
+              )
       ),
+      
       
       tabItem(tabName = "FAQ",
               h2("Frequently Asked Questions")
@@ -216,7 +259,34 @@ server <- function(input, output) {
     req(df_reactive())
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
   })
+
+  #Menampilkan Jawaban QUiz
+  observeEvent(input$check_quiz, {
+    # Feedback untuk Soal 1
+    output$quiz1_feedback <- renderUI({
+      req(input$quiz1) # Pastikan pengguna sudah menjawab
+      if (input$quiz1 == "A. Logit (P(Y=1))= -12,35 +0,49x") {
+        tags$p("Benar!", style = "color: green; font-weight: bold;")
+      } else {
+        tags$p("Salah. Jawaban yang benar adalah A. Logit (P(Y=1))= -12,35 +0,49x", style = "color: red; font-weight: bold;")
+      }
+    })
+    
+    #Feedback untuk soal 2
+    output$quiz2_feedback <- renderUI({
+      req(input$quiz2) # Pastikan pengguna sudah menjawab
+      if (input$quiz2 == "C. 0,129") {
+        tags$p("Benar!", style = "color: green; font-weight: bold;")
+      } else {
+        tags$p("Salah. Jawaban yang benar adalah C. 0,129", style = "color: red; font-weight: bold;")
+      }
+    })
+    
+  })
 }
+
+
+
 
 # Run app
 shinyApp(ui, server)
