@@ -88,11 +88,35 @@ ui <- dashboardPage(
       ),
       
       tabItem(tabName = "step2",
-              h2("Eksplorasi Data")
+              fluidRow(
+                column(6,
+                       tags$h3(icon("chart-bar"), "Data Summary",style= "font-weight: bold;"),
+                       div(class = "box-custom",
+                           verbatimTextOutput("summaryOutputUpload")
+                       )
+                ),
+                
+                column(6,
+                       tags$h3(icon("chart-bar"), "Visualisasi Data",style= "font-weight: bold;"),
+                       div(class = "box-custom",
+                           uiOutput("var_to_plot_ui"),
+                           plotOutput("plotOutputUpload")
+                       )
+                )
+              )
       ),
       
       tabItem(tabName = "step3",
-              h2("Uji Asumsi dan Pemodelan")
+              fluidRow(
+                column(6, 
+                       tags$h3(icon("chart-bar"), "Uji Multikolinearitas",style= "font-weight: bold;"),
+                       DT::dataTableOutput("vif_table_dt")
+                ),
+                column(6,
+                       tags$h3(icon("chart-bar"), "Matriks Cramer's V",style= "font-weight: bold;"),
+                       plotOutput("cramers_plot")
+                )
+              )
       ),
       
       tabItem(tabName = "step4",
@@ -218,6 +242,93 @@ server <- function(input, output) {
   output$processed_table <- DT::renderDataTable({
     req(df_reactive())
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
+  })
+  
+# Data Summary
+  output$summaryOutputUpload <- renderPrint({
+    req(data())
+    summary(data())
+  })
+  
+  #Visualisasi berdasarkan variabel yang dipilih
+  output$plotOutputUpload <- renderPlot({
+    df <- df_reactive()
+    var_to_plot <- input$var_to_plot
+    
+    if (!is.null(var_to_plot) && var_to_plot %in% names(df)) {
+      ggplot(df, aes_string(x = var_to_plot)) +
+        geom_bar(fill = "#FFB6C1") +
+        labs(title = paste("Distribusi", var_to_plot),
+             x = var_to_plot, y = "Jumlah") +
+        theme_minimal(base_family = "Georgia") +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    }
+  })
+  
+  #Tabel VIF
+  output$vif_table_dt <- DT::renderDataTable({
+    req(df_reactive(), input$response_var, predictor_vars())
+    
+    df <- df_reactive()
+    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse = " + ")))
+    model <- glm(formula, data = df, family = binomial)
+    vif_vals <- car::vif(model)
+    
+    vif_df <- data.frame(
+      `Variabel_Prediktor` = names(vif_vals),
+      VIF = round(as.numeric(vif_vals), 6)
+    )
+    
+    DT::datatable(vif_df, rownames = FALSE, options = list(dom = 't'))
+  })
+  
+  #Matriks Korelasi
+  cramer_v <- function(x, y) {
+    cm <- table(x, y)
+    n <- sum(cm)
+    r <- nrow(cm)
+    k <- ncol(cm)
+    
+    chisq <- chisq.test(cm)$statistic
+    chisqcorr <- max(0, chisq - ((k - 1) * (r - 1)) / (n - 1))
+    kcorr <- k - ((k - 1)^2) / (n - 1)
+    rcorr <- r - ((r - 1)^2) / (n - 1)
+    
+    v <- sqrt(chisqcorr / n) / min(kcorr - 1, rcorr - 1)
+    return(v)
+  }
+  
+  cramer_v_matrix <- function(df, vars) {
+    n <- length(vars)
+    matrix_v <- matrix(NA, nrow = n, ncol = n)
+    rownames(matrix_v) <- vars
+    colnames(matrix_v) <- vars
+    
+    for (i in seq_along(vars)) {
+      for (j in seq_along(vars)) {
+        matrix_v[i, j] <- cramer_v(df[[vars[i]]], df[[vars[j]]])
+      }
+    }
+    matrix_v <- round(matrix_v, 3)
+    return(matrix_v)
+  }
+  
+  output$cramers_plot <- renderPlot({
+    req(df_reactive(), predictor_vars())
+    
+    df <- df_reactive()
+    vars <- predictor_vars()
+    
+    cramers_matrix <- cramer_v_matrix(df, vars)
+    
+    ggcorrplot::ggcorrplot(cramers_matrix, 
+                           hc.order = TRUE,
+                           type = "lower", 
+                           lab = TRUE,
+                           lab_size = 3,
+                           method = "square",
+                           colors = c("yellow", "white", "red"),
+                           ggtheme = ggplot2::theme_minimal(base_family = "Georgia"))
   })
 }
 
