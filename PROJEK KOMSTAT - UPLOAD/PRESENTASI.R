@@ -162,24 +162,50 @@ server <- function(input, output, session) {
     )
   })
   
-  # Pilih variabel respon
+  # Pemilihan Variabel Respon (DIPERBARUI)
+  # Hanya variabel yang memenuhi salah satu dari dua kriteria berikut yang akan ditampilkan:
+  # 1) Variabel kategorik dengan tepat 2 kategori unik (binary categorical),
+  # 2) Variabel numerik dengan nilai hanya 0 dan 1 (binary numeric).
   output$select_var_respon <- renderUI({
-    req(data())
-    selectInput("response_var", "Pilih variabel respon (Y):",
-                choices = names(data()))
-  })
-  
-  # Preprocessing: ubah NA jadi modus dan ubah ke faktor
-  df_reactive <- reactive({
     req(data())
     df <- data()
     
-    # Ubah ke faktor
-    for (col in c(categorical_vars, binary_vars)) {
-      if (col %in% names(df)) {
-        df[[col]] <- as.factor(df[[col]])
+    # Inisialisasi vektor kosong untuk menampung nama variabel yang valid
+    valid_vars <- c()
+    
+    # Loop melalui setiap kolom di dataset
+    for (var_name in names(df)) {
+      col <- df[[var_name]]
+      # Hilangkan nilai NA untuk pengecekan
+      col_non_na <- na.omit(col)
+      
+      # Cek Kondisi 1: Apakah variabel kategorik dengan 2 level unik?
+      is_categorical_2_level <- (is.factor(col) || is.character(col)) && (length(unique(col_non_na)) == 2)
+      
+      # Cek Kondisi 2: Apakah variabel numerik yang hanya berisi 0 dan 1?
+      is_numeric_01 <- is.numeric(col) && all(col_non_na %in% c(0, 1)) && length(unique(col_non_na)) > 0
+      
+      # Jika salah satu kondisi terpenuhi, tambahkan nama variabel ke daftar valid
+      if (is_categorical_2_level || is_numeric_01) {
+        valid_vars <- c(valid_vars, var_name)
       }
     }
+    
+    # Buat selectInput hanya dengan variabel yang telah divalidasi
+    selectInput("response_var", "Pilih variabel respon (Y):", choices = valid_vars)
+  })
+  
+  # Declare variabel prediktor
+  predictor_vars <- reactive({
+    req(data(), input$response_var)
+    setdiff(names(data()), input$response_var)
+  })
+  
+  output$var_to_plot_ui <- renderUI({
+    req(df_reactive(), predictor_vars())
+    selectInput("var_to_plot", "Pilih Variabel Kategorik:",
+                choices = predictor_vars(), selected = predictor_vars()[1])
+  })
     
     # Mengganti NA dengan modus
     fill_na_mode <- function(x) {
