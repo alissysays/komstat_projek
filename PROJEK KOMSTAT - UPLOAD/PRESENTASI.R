@@ -100,7 +100,55 @@ ui <- dashboardPage(
       ),
       
       tabItem(tabName = "quiz",
-              h2("Quiz Section")
+              #tambahin ya gusy nomor 1-2
+              fluidRow(
+                column(12,
+                       h4("Soal 3", style="font-weight:bold;"),
+                       p("Jika dilakukan uji Wald untuk menganalisis pengaruh memiliki kebiasaan minum kopi dengan hasil tes kebugaran, didapatkan hasil sebesar -3,77 dan P-Value mendekati 0. Apa yang dapat diinterpretasikan?"),
+                       radioButtons("quiz3", "Pilihan:", 
+                                    choices = c("A. Tolak H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi tidak memiliki pengaruh signifikan terhadap hasil tes kebugaran", 
+                                                "B. Tolak H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi memiliki pengaruh signifikan terhadap hasil tes kebugaran",
+                                                "C. Terima H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi memiliki pengaruh signifikan terhadap hasil tes kebugaran",
+                                                "D. Terima H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi tidak dapat disimpulkan",
+                                                "E. Hasil tersebut tidak dapat dibuat interpretasi"), 
+                                    selected = character(0)),
+                       # Tempat untuk menampilkan feedback jawaban 3
+                       uiOutput("quiz3_feedback")),
+              ),
+              hr(),
+              
+              fluidRow(
+                column(12,
+                       h4("Soal 4", style="font-weight:bold;"),
+                       tags$img(src = "quiz_4.png", width = "100%"),
+                       p("Berikut adalah hasil dari Generalized Linear Model untuk mengetahui apakah ideologi manusia benar berasal dari hewan atau tidak. Berdasarkan output Generalized Linear Model tersebut, interval kepercayaan Wald 95% untuk kebenaran ideologi tersebut adalah..."),
+                       radioButtons("quiz4", "Pilihan:", 
+                                    choices = c("A. (0,4 ; 0,8)", 
+                                                "B. (0,5 ; 0,7)",
+                                                "C. (0,1 ; 0,4)",
+                                                "D. (0,12 ; 0,23)",
+                                                "E. (0,4 ; 0,6)"), 
+                                    selected = character(0)),
+                       # Tempat untuk menampilkan feedback jawaban 4
+                       uiOutput("quiz4_feedback")),
+              ),
+              hr(),
+              
+              fluidRow(
+                column(12,
+                       h4("Soal 5", style="font-weight:bold;"),
+                       p("Selain uji Chi-Square, ukuran asosiasi apa yang sering digunakan untuk mengevaluasi hubungan antara dua variabel kategorik?"),
+                       radioButtons("quiz5", "Pilihan:", 
+                                    choices = c("A. Mean Absolute Error", 
+                                                "B. R-Squared",
+                                                "C. Koefisien korelasi Pearson",
+                                                "D. Risiko relatif dan odds rasio",
+                                                "E. Mean Absolute Percentage Error"), 
+                                    selected = character(0)),
+                       # Tempat untuk menampilkan feedback jawaban 5
+                       uiOutput("quiz5_feedback")),
+              ),
+              hr(),
       ),
       
       tabItem(tabName = "FAQ",
@@ -218,6 +266,40 @@ server <- function(input, output) {
   output$processed_table <- DT::renderDataTable({
     req(df_reactive())
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
+  })
+  
+  #Menampilkan Jawaban QUiz
+  observeEvent(input$check_quiz, {
+    #Feedback untuk soal 3
+    output$quiz3_feedback <- renderUI({
+      req(input$quiz3) # Pastikan pengguna sudah menjawab
+      if (input$quiz3 == "B. Tolak H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi memiliki pengaruh signifikan terhadap hasil tes kebugaran") {
+        tags$p("Benar!", style = "color: green; font-weight: bold;")
+      } else {
+        tags$p("Salah. Jawaban yang benar adalah B. Tolak H0 yang memiliki arti bahwa memiliki kebiasaan minum kopi memiliki pengaruh signifikan terhadap hasil tes kebugaran", style = "color: red; font-weight: bold;")
+      }
+    })
+    
+    #Feedback untuk soal 4
+    output$quiz4_feedback <- renderUI({
+      req(input$quiz4) # Pastikan pengguna sudah menjawab
+      if (input$quiz4 == "E. (0,4 ; 0,6)") {
+        tags$p("Benar!", style = "color: green; font-weight: bold;")
+      } else {
+        tags$p("Salah. Jawaban yang benar adalah E. (0,4 ; 0,6)", style = "color: red; font-weight: bold;")
+      }
+    })
+    
+    #Feedback untuk soal 5
+    output$quiz5_feedback <- renderUI({
+      req(input$quiz5) # Pastikan pengguna sudah menjawab
+      if (input$quiz5 == "D. Risiko relatif dan odds rasio") {
+        tags$p("Benar!", style = "color: green; font-weight: bold;")
+      } else {
+        tags$p("Salah. Jawaban yang benar adalah D. Risiko relatif dan odds rasio", style = "color: red; font-weight: bold;")
+      }
+    })
+    
   })
 }
 
