@@ -220,6 +220,43 @@ server <- function(input, output) {
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
   })
 }
+ #Output GLM dengan 3 link function
+  model_logit <- reactive({
+    req(df_reactive(), input$response_var, predictor_vars())
+    df <- df_reactive()
+    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
+    glm(formula, data = df, family = binomial(link="logit"))
+  })
+  
+  model_probit <- reactive({
+    req(df_reactive(), input$response_var, predictor_vars())
+    df <- df_reactive()
+    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
+    glm(formula, data = df, family = binomial(link="probit"))
+  })
+  
+  model_cloglog <- reactive({
+    req(df_reactive(), input$response_var, predictor_vars())
+    df <- df_reactive()
+    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
+    glm(formula, data = df, family = binomial(link="cloglog"))
+  })
+  
+  output$summarylogitOutputUpload <- renderPrint({
+    req(model_logit())
+    summary(model_logit())
+  })
+  
+  output$summaryprobitOutputUpload <- renderPrint({
+    req(model_probit())
+    summary(model_probit())
+  })
+  
+  output$summarycloglogOutputUpload <- renderPrint({
+    req(model_cloglog())
+    summary(model_cloglog())
+  })
+}
 
 # Run app
 shinyApp(ui, server)
