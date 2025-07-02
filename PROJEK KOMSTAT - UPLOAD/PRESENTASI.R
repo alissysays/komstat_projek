@@ -221,5 +221,48 @@ server <- function(input, output) {
   })
 }
 
+# FAQs - SUBMIT KOMENTAR
+  observeEvent(input$submit_faq, {
+    req(input$first_name, input$comment) 
+    
+    feedback_data <- data.frame(
+      Timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+      FirstName = input$first_name,
+      LastName = input$last_name,
+      Email = input$email,
+      Comment = input$comment
+    )
+    
+    # Gunakan tryCatch untuk menangani error penulisan file
+    tryCatch({
+      # Tulis data ke file CSV
+      write.table(
+        feedback_data,
+        "feedback_log.csv",
+        sep = ",",
+        append = TRUE,
+        row.names = FALSE,
+        col.names = !file.exists("feedback_log.csv")
+      )
+      
+      # Jika berhasil, tampilkan notifikasi sukses dan kosongkan form
+      showNotification("Terima kasih! Masukan Anda telah kami terima.", type = "message", duration = 5)
+      
+      updateTextInput(session, "first_name", value = "")
+      updateTextInput(session, "last_name", value = "")
+      updateTextInput(session, "email", value = "")
+      updateTextAreaInput(session, "comment", value = "")
+      
+    }, error = function(e) {
+      # Jika gagal, tampilkan notifikasi error
+      showNotification(
+        paste("Gagal menyimpan masukan. Pastikan server memiliki izin tulis. Error:", e$message), 
+        type = "error", 
+        duration = 10
+      )
+    })
+  })
+}
+
 # Run app
 shinyApp(ui, server)
