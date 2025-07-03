@@ -220,43 +220,127 @@ server <- function(input, output) {
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
   })
 }
- #Output GLM dengan 3 link function
-  model_logit <- reactive({
-    req(df_reactive(), input$response_var, predictor_vars())
-    df <- df_reactive()
-    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
-    glm(formula, data = df, family = binomial(link="logit"))
+ #Coef Plot
+  create_coef_plot <- function(model, title) {
+    if (is.null(model)) return(NULL)
+    
+    coef_df <- as.data.frame(summary(model)$coef)
+    coef_df$Variable <- rownames(coef_df)
+    colnames(coef_df) <- c("Estimate", "Std.Error", "z.value", "Pr...z..", "Variable")
+    
+    coef_df <- coef_df %>% filter(Variable != "(Intercept)")
+    
+    coef_df$lower_ci <- coef_df$Estimate - 1.96 * coef_df$Std.Error
+    coef_df$upper_ci <- coef_df$Estimate + 1.96 * coef_df$Std.Error
+    
+    ggplot(coef_df, aes(x = Variable, y = Estimate, ymin = lower_ci, ymax = upper_ci)) +
+      geom_pointrange(color = "#FFA500", size = 0.8) +
+      geom_hline(yintercept = 0, linetype = "dashed", color = "#00BFFF") +
+      coord_flip() + # Flip coordinates 
+      labs(title = title,
+           x = "Variabel Prediktor",
+           y = "Estimasi Koefisien") +
+      theme_minimal(base_family = "Georgia") +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  }
+  
+  output$coef_plot_logit <- renderPlot({
+    create_coef_plot(model_logit(), "Koefisien Model Logit")
   })
   
-  model_probit <- reactive({
-    req(df_reactive(), input$response_var, predictor_vars())
-    df <- df_reactive()
-    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
-    glm(formula, data = df, family = binomial(link="probit"))
+  output$coef_plot_probit <- renderPlot({
+    create_coef_plot(model_probit(), "Koefisien Model Probit")
   })
   
-  model_cloglog <- reactive({
-    req(df_reactive(), input$response_var, predictor_vars())
-    df <- df_reactive()
-    formula <- as.formula(paste(input$response_var, "~", paste(predictor_vars(), collapse="+" )))
-    glm(formula, data = df, family = binomial(link="cloglog"))
+  output$coef_plot_cloglog <- renderPlot({
+    create_coef_plot(model_cloglog(), "Koefisien Model Cloglog")
   })
   
-  output$summarylogitOutputUpload <- renderPrint({
-    req(model_logit())
-    summary(model_logit())
-  })
-  
-  output$summaryprobitOutputUpload <- renderPrint({
-    req(model_probit())
-    summary(model_probit())
-  })
-  
-  output$summarycloglogOutputUpload <- renderPrint({
-    req(model_cloglog())
-    summary(model_cloglog())
-  })
-}
 
+  observeEvent(input$help_coef_logit, {
+    sendSweetAlert(
+      session = session,
+      title = "Cara Membaca Koefisien Plot Logit",
+      text = paste0("Plot ini menunjukkan pengaruh setiap variabel prediktor terhadap log-odds variabel target Anda:\n\n",
+                    "• Titik (Dot): Menunjukkan nilai estimasi koefisien (pengaruh) dari variabel prediktor tersebut.\n",
+                    "• Garis Horizontal: Interval kepercayaan (confidence interval) untuk estimasi koefisien. Jika garis ini melewati garis nol vertikal, berarti variabel tersebut tidak signifikan secara statistik pada tingkat kepercayaan tertentu.\n",
+                    "• Garis Vertikal Putus-putus (di tengah): Ini adalah garis nol. Jika titik koefisien berada di kanan garis ini, variabel memiliki pengaruh positif. Jika di kiri, pengaruhnya negatif.\n\n",
+                    "Semakin jauh titik dari garis nol (baik ke kanan atau kiri), semakin kuat pengaruh variabel tersebut."),
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+    )
+  })
+  
+  observeEvent(input$help_coef_probit, {
+    sendSweetAlert(
+      session = session,
+      title = "Cara Membaca Koefisien Plot Probit",
+      text = paste0("Plot ini serupa dengan Koefisien Plot Logit, namun menggunakan fungsi *link* 'probit' (berdasarkan distribusi normal kumulatif). Interpretasi dasarnya sama:\n\n" ,
+        "• Titik (Dot): Nilai estimasi koefisien.\n" ,
+        "• Garis Horizontal: Interval kepercayaan. Jika melewati garis nol, tidak signifikan.\n" ,
+        "• Garis Vertikal Putus-putus (di tengah): Garis nol. Kanan berarti pengaruh positif, kiri berarti pengaruh negatif.\n\n" ,
+        "Model Probit seringkali menghasilkan interpretasi yang serupa dengan Logit, tetapi dengan asumsi distribusi yang berbeda. Perbedaan koefisien antara kedua model biasanya kecil."),
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+    )
+  })
+  
+  observeEvent(input$help_coef_cloglog, {
+    sendSweetAlert(
+      session = session,
+      title = "Cara Membaca Koefisien Plot Cloglog",
+      text = paste0("Plot ini menampilkan estimasi koefisien untuk model regresi logistik yang menggunakan fungsi link 'cloglog' (complementary log-log). Fungsi cloglog sering digunakan ketika kejadian yang diminati memiliki probabilitas yang sangat kecil. Interpretasinya serupa dengan logit dan probit:\n\n" ,
+        "• Titik (Dot): Nilai estimasi koefisien.\n" ,
+        "• Garis Horizontal: Interval kepercayaan. Jika melewati garis nol, tidak signifikan.\n" ,
+        "• Garis Vertikal Putus-putus (di tengah): Garis nol. Kanan berarti pengaruh positif, kiri berarti pengaruh negatif.\n\n" ,
+        "Perhatikan bahwa besar koefisien antar fungsi link (logit, probit, cloglog) tidak bisa langsung dibandingkan karena skala yang berbeda, tetapi arah pengaruh (positif/negatif) dan signifikansi statistik umumnya konsisten."),
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+    )
+  })
+  
+  #AUC dan ROC Plot
+  output$roc_plot <- renderPlot({
+    df <- df_reactive()
+    
+    roc_logit <- roc(df[[input$response_var]], predict(model_logit(), type = "response"))
+    roc_probit <- roc(df[[input$response_var]], predict(model_probit(), type = "response"))
+    roc_cloglog <- roc(df[[input$response_var]], predict(model_cloglog(), type = "response"))
+    
+    auc_logit_val <- auc(roc_logit)
+    auc_probit_val <- auc(roc_probit)
+    auc_cloglog_val <- auc(roc_cloglog)
+    
+    plot(roc_logit, col = "red", lwd = 2, main = "ROC Curve Ketiga Model")
+    plot(roc_probit, col = "purple", lwd = 2, add = TRUE)
+    plot(roc_cloglog, col = "#00BFFF", lwd = 2, add = TRUE)
+    
+    legend("bottomright", legend = c("Logit", "Probit", "Cloglog"),
+           col = c("red", "purple", "#00BFFF"), lwd = 2)
+    
+    # AUC
+    text(0, 0.35, paste("AUC Logit:", round(auc_logit_val, 3)), col = "red", cex = 0.9)
+    text(0, 0.30, paste("AUC Probit:", round(auc_probit_val, 3)), col = "purple", cex = 0.9)
+    text(0, 0.25, paste("AUC Cloglog:", round(auc_cloglog_val, 3)), col = "#00BFFF", cex = 0.9)
+  })
+  
+  observeEvent(input$help_roc_plot, {
+    sendSweetAlert(
+      session = session,
+      title = "Cara Membaca Kurva ROC dan AUC",
+      text = paste0("Kurva ROC membantu Anda menilai kinerja model klasifikasi:\n\n" ,
+        "• Sumbu X (False Positive Rate / 1 - Spesifisitas): Proporsi kasus negatif yang salah diklasifikasikan sebagai positif.\n" ,
+        "• Sumbu Y (True Positive Rate / Sensitivitas): Proporsi kasus positif yang berhasil diklasifikasikan sebagai positif.\n\n" ,
+        "• Garis Diagonal (dari (0,0) ke (1,1)): Menunjukkan model yang tidak lebih baik dari menebak secara acak.\n" ,
+        "• Kurva Model: Semakin dekat kurva model ke pojok kiri atas, semakin baik kinerja model dalam membedakan kelas.\n\n" ,
+        "• AUC (Area Under the Curve): Angka ini (0 hingga 1) adalah ringkasan kinerja keseluruhan model. Semakin dekat nilai AUC ke 1, semakin baik model Anda. AUC 0.5 berarti model tidak lebih baik dari tebakan acak, sementara AUC 1 berarti model sempurna."),
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+    )
+  })
 # Run app
 shinyApp(ui, server)
