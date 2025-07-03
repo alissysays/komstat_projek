@@ -4,12 +4,6 @@ library(ggplot2)
 library(DT)
 library(shinydashboard)
 
-# code bantuan variabel
-categorical_vars <- c("gender", "EKG_results", "region", "dietary_habits")
-binary_vars <- c("hypertension", "diabetes", "obesity", "family_history", 
-                 "previous_heart_disease", "participated_in_free_screening")
-predictor_vars <- c(categorical_vars, binary_vars)
-
 # UI
 ui <- dashboardPage(
   skin = "yellow",
@@ -62,7 +56,7 @@ ui <- dashboardPage(
                 p("Tiga link function yang umum digunakan adalah logit, probit, dan complementary log-log (cloglog). Fungsi logit mengubah menjadi log-odds dengan rumus, dan merupakan yang paling umum digunakan karena interpretasinya yang jelas terhadap odds. Fungsi probit menggunakan invers dari distribusi normal standar kumulatif, cocok untuk data yang diasumsikan mengikuti distribusi normal laten. Sedangkan cloglog menggunakan, lebih sensitif untuk kejadian jarang dan sering digunakan dalam analisis survival. Pemilihan link function tergantung pada asumsi distribusi laten dan konteks aplikasinya."),
                 br(),
                 h4("Silahkan Input Datamu!"),
-                p("Pastikan datamu dalam format CSV"),
+                p("Pastikan datamu dalam format CSV (max 30MB"),
                 fileInput("file1", "Choose a File"),
                 textOutput("file_warning"),
                 tableOutput("file1_contents"),
