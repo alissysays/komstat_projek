@@ -86,18 +86,29 @@ ui <- dashboardPage(
       
       tabItem(tabName = "step2",
               fluidRow(
+                p("Step 2 akan memandu Anda untuk mengeksplorasi struktur dan karakteristik dasar dataset Anda.", style="text-align: center;"),
                 column(6,
                        tags$h3(icon("chart-bar"), "Data Summary",style= "font-weight: bold;"),
+                       
                        div(class = "box-custom",
-                           verbatimTextOutput("summaryOutputUpload")
+                           verbatimTextOutput("summaryOutputUpload"),
+                           p(actionLink("help_summary", 
+                                        "Klik di sini untuk detail lebih lanjut tentang tabel ini." ),
+                             style = "text-align: left; margin-top: 5px; font-size: 0.9em;")
+                           
+                           
                        )
                 ),
                 
                 column(6,
                        tags$h3(icon("chart-bar"), "Visualisasi Data",style= "font-weight: bold;"),
+                       
                        div(class = "box-custom",
                            uiOutput("var_to_plot_ui"),
-                           plotOutput("plotOutputUpload")
+                           plotOutput("plotOutputUpload"),
+                           p(actionLink("help_viz", 
+                                        "Klik di sini untuk detail lebih lanjut tentang grafik ini." ),
+                             style = "text-align: left; margin-top: 5px; font-size: 0.9em;"),
                        )
                 )
               )
@@ -234,8 +245,23 @@ server <- function(input, output) {
 
   # Data Summary
   output$summaryOutputUpload <- renderPrint({
-    req(data())
-    summary(data())
+    req(df_reactive())
+    summary(df_reactive())
+  })
+
+  # Menampilkan Deskripsi Data Summary
+  observeEvent(input$help_summary, {
+    sendSweetAlert(
+      session = session,
+      title = "Data Summary",
+      text = "Bagian 'Data Summary' ini menyajikan ringkasan statistik deskriptif untuk setiap variabel yang ada dalam dataset Anda.
+      Ringkasan ini mencakup informasi penting seperti nilai minimum (Min.), kuartil pertama (1st Qu.), median, nilai rata-rata (Mean), kuartil ketiga (3rd Qu.), dan nilai maksimum (Max.).
+      Untuk variabel kategorik, Anda akan melihat frekuensi kemunculan setiap kategori. Informasi ini sangat berguna untuk memahami distribusi, rentang nilai, dan potensi anomali dalam data sebelum dilakukan analisis lebih lanjut.",
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+      
+    )
   })
   
   # Visualisasi distribusi variabel yang dipilih
@@ -251,6 +277,20 @@ server <- function(input, output) {
         theme_minimal(base_family = "Georgia") +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
     }
+  })
+  
+  # Menampilkan Deskripsi Visualisai
+  observeEvent(input$help_viz, {
+    sendSweetAlert(
+      session = session,
+      title = "Visualisasi Data",
+      text = "Panel 'Visualisasi Data' ini memungkinkan Anda untuk mengeksplorasi distribusi data berdasarkan variabel prediktor yang Anda pilih. Pilih salah satu variabel dari daftar di atas, dan grafik di bawahnya akan menampilkan distribusinya.
+                         Visualisasi ini cukup penting untuk mengidentifikasi pola, sebaran, dan potensi hubungan antara variabel prediktor dengan variabel respon Anda.",
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+      
+    )
   })
 }
 
