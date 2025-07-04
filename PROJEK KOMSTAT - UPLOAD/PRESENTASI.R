@@ -55,8 +55,11 @@ ui <- dashboardPage(
                 h3("Apa itu Fungsi Binomial?", style = "font-weight: bold;"),
                 p("Tiga link function yang umum digunakan adalah logit, probit, dan complementary log-log (cloglog). Fungsi logit mengubah menjadi log-odds dengan rumus, dan merupakan yang paling umum digunakan karena interpretasinya yang jelas terhadap odds. Fungsi probit menggunakan invers dari distribusi normal standar kumulatif, cocok untuk data yang diasumsikan mengikuti distribusi normal laten. Sedangkan cloglog menggunakan, lebih sensitif untuk kejadian jarang dan sering digunakan dalam analisis survival. Pemilihan link function tergantung pada asumsi distribusi laten dan konteks aplikasinya."),
                 br(),
-                h4("Silahkan Input Datamu!"),
-                p("Pastikan datamu dalam format CSV (max 30MB"),
+                h4("Silahkan Input Datamu!", style = "font-weight: bold;"),
+                p("Keterangan:", style = "font-weight: bold;"),
+                p("   1. Pastikan datamu dalam format CSV"),
+                p("   2. Maksimal file berukuran 30MB"),
+                p("   3. Pastikan terdapat minimal 1 variabel biner pada dataset"),
                 fileInput("file1", "Choose a File"),
                 textOutput("file_warning"),
                 tableOutput("file1_contents"),
@@ -107,25 +110,37 @@ server <- function(input, output, session) {
   data <- reactive({
     req(input$file1)
     
-    # Cek apakah .csv
+    #cek apakah .csv
     ext <- tools::file_ext(input$file1$name)
     if (tolower(ext) != "csv") {
-      return(NULL)
-    }
-    
-    read.csv(input$file1$datapath)
-  })
-  
-  # Pesan kesalahan jika bukan CSV
-  output$file_warning <- renderText({
-    req(input$file1)
-    ext <- tools::file_ext(input$file1$name)
-    
-    if (tolower(ext) != "csv") {
-      return("File dataset tidak sesuai. Harap unggah file dengan format .csv")
+      # Tampilkan popup peringatan jika format file salah
+      sendSweetAlert(
+        session = session,
+        title = "Format File Salah!",
+        text = "Mohon unggah file dengan format .csv",
+        type = "error",
+        btn_labels = "Oke",
+        btn_colors = "#FFA500"
+      )
     } else {
-      return("")
+      # Lanjutkan proses jika format file benar
+      output$file_info <- renderPrint({
+        cat("File berhasil diunggah:\n")
+        print(input$upload_file)
+        # Di sini Anda bisa menambahkan kode untuk membaca dan memproses file
+      })
+      
+      # Opsional: Tampilkan popup sukses
+      sendSweetAlert(
+        session = session,
+        title = "Sukses!",
+        text = paste0("File '", input$upload_file$name, "' berhasil diunggah."),
+        type = "success",
+        btn_labels = "Oke",
+        btn_colors = "#FFA500"
+      )
     }
+    read.csv(input$file1$datapath)
   })
   
   # Preview data
