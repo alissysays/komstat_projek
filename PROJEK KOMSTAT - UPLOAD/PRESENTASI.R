@@ -74,13 +74,23 @@ ui <- dashboardPage(
       
       tabItem(tabName = "step1", 
               fluidRow(
-                box(title = tagList(icon("table"), "Tabel Missing Value"), 
-                    width = 6, status = "primary", solidHeader = TRUE,
-                    DT::dataTableOutput("missing_table")),
+                p("Step 1 akan memandu Anda melalui tahapan awal analisis data, dimulai dengan pemeriksaan kualitas data dan mempersiapkan data untuk pemodelan", style="text-align: center;"),
+                box(title = tagList(
+                  icon("table"), "Tabel Missing Value"), 
+                  width = 6, status = "primary", solidHeader = TRUE,
+                  DT::dataTableOutput("missing_table"),
+                p(actionLink("help_missing_value", 
+                             "Klik di sini untuk detail lebih lanjut tentang tabel ini." ),
+                style = "text-align: left; margin-top: 5px; font-size: 0.9em;")
+                    ),
                 
                 box(title = tagList(icon("check-circle"), "Tabel Setelah Preprocessing Data"), 
                     width = 6, status = "success", solidHeader = TRUE,
-                    DT::dataTableOutput("processed_table"))
+                    DT::dataTableOutput("processed_table"),
+                    p(actionLink("help_prep_data","Klik di sini untuk detail lebih lanjut tentang tabel ini." ),
+                      style = "text-align: left; margin-top: 5px; font-size: 0.9em;"))
+          
+                
               )
       ),
       
@@ -246,11 +256,11 @@ server <- function(input, output) {
   })
   
   # Tabel Missing Value
-  output$missing_table <- DT::renderDataTable({
+ output$missing_table <- DT::renderDataTable({
     req(data())
     df <- data()
     sum_na <- data.frame()
-    for (col in predictor_vars) {
+    for (col in predictor_vars()) {
       if (col %in% names(df)) {
         na_count <- sum(is.na(df[[col]]))
         sum_na <- rbind(sum_na, data.frame(var = col, n_na = na_count))
@@ -259,10 +269,39 @@ server <- function(input, output) {
     DT::datatable(sum_na, options = list(scrollX = TRUE))
   })
   
+  observeEvent(input$help_missing_value, {
+    sendSweetAlert(
+      session = session,
+      title = "Tabel Missing Value",
+      text = paste0(
+        "Tabel ini menunjukkan status kelengkapan data Anda:\n\n",
+        "• Kolom 'var': Nama dari setiap variabel (kolom) dalam dataset.\n",
+        "• Kolom 'n_na': Jumlah nilai yang hilang (missing values) pada variabel tersebut.\n\n",
+        "Jika 'n_na' adalah 0, berarti variabel tersebut tidak memiliki nilai yang hilang. Jika 'n_na' lebih dari 0, Anda perlu memperhatikan variabel tersebut karena data yang hilang dapat memengaruhi analisis Anda."
+      ),
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+      
+    )
+  })
+  
   # Tabel setelah preprocessing
   output$processed_table <- DT::renderDataTable({
     req(df_reactive())
     DT::datatable(df_reactive(), options = list(scrollX = TRUE))
+  })
+
+    observeEvent(input$help_prep_data, {
+    sendSweetAlert(
+      session = session,
+      title = "Tabel Preprocessing Data",
+      text =" tabel ini menampilkan dataset setelah melalui proses pembersihan dan transformasi data. 
+      Proses ini memastikan data siap dan berkualitas tinggi untuk analisis logistik biner.",
+      type = "question",
+      btn_labels = "Oke",
+      btn_colors = "#FFA500"
+    )
   })
   
   #Menampilkan Jawaban QUiz
