@@ -264,12 +264,18 @@ server <- function(input, output) {
   observeEvent(input$check_quiz, {
     confirmSweetAlert(
       session = session,
-      inputId = "confirm_check", 
+      inputId = "confirm_check",
+      title = "Konfirmasi Jawaban",
       text = "Apakah Anda sudah yakin dengan semua jawaban Anda?",
       type = "question", 
-      btn_labels = "ya", 
-      btn_colors = "#FFA500" 
+      btn_labels = c("Tidak", "Ya"), 
+      btn_colors = c("#D33", "#FFA500") 
     )
+  })
+  
+  observeEvent(input$confirm_check, {
+    req(input$confirm_check)
+    
     # Feedback untuk Soal 1
     output$quiz1_feedback <- renderUI({
       req(input$quiz1) # Pastikan pengguna sudah menjawab
